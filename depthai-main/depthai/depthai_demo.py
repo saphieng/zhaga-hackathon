@@ -2,13 +2,13 @@
 from pathlib import Path
 import cv2
 import depthai as dai
-
 from depthai_helpers.managers import NNetManager, PreviewManager, FPSHandler, PipelineManager, Previews, EncodingManager
 from depthai_helpers.version_check import check_depthai_version
 import platform
 from depthai_helpers.arg_manager import parse_args
 from depthai_helpers.config_manager import BlobManager, ConfigManager
 from depthai_helpers.utils import frame_norm, to_planar, to_tensor_result, load_module
+import time
 
 print('Using depthai module from: ', dai.__file__)
 print('Depthai version installed: ', dai.__version__)
@@ -24,9 +24,7 @@ conf.adjustPreviewToOptions()
 callbacks = load_module(conf.args.callback)
 rgb_res = conf.getRgbResolution()
 mono_res = conf.getMonoResolution()
-
-
-disp_multiplier = 500 / conf.maxDisparity
+disp_multiplier = 255 / conf.maxDisparity
 
 
 if conf.args.report_file:
@@ -217,6 +215,7 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
                 fps.draw_fps(pv)
                 pv.show_frames(scale=conf.args.scale, callback=callbacks.on_show_frame)
                 i += nn_manager.get_traffic_counter()
+                # time.sleep(1)
                 nn_manager.reset_traffic_counter()
                 # i+=1
                 print(i)
