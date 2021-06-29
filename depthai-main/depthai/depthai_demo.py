@@ -6,7 +6,6 @@ import depthai as dai
 from depthai_helpers.managers import NNetManager, PreviewManager, FPSHandler, PipelineManager, Previews, EncodingManager
 from depthai_helpers.version_check import check_depthai_version
 import platform
-
 from depthai_helpers.arg_manager import parse_args
 from depthai_helpers.config_manager import BlobManager, ConfigManager
 from depthai_helpers.utils import frame_norm, to_planar, to_tensor_result, load_module
@@ -27,7 +26,7 @@ rgb_res = conf.getRgbResolution()
 mono_res = conf.getMonoResolution()
 
 
-disp_multiplier = 255 / conf.maxDisparity
+disp_multiplier = 500 / conf.maxDisparity
 
 
 if conf.args.report_file:
