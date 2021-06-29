@@ -162,7 +162,8 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
     nn_data = []
     sbb_rois = []
     callbacks.on_setup(**locals())
-
+    i = 0
+    
     try:
         while True:
             fps.next_iter()
@@ -177,6 +178,7 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
                     if sbb is not None:
                         sbb_rois = sbb.getConfigData()
                     depth_frame = pv.get(Previews.depth.name)
+                    # i = 0
                     for roi_data in sbb_rois:
                         roi = roi_data.roi.denormalize(depth_frame.shape[1], depth_frame.shape[0])
                         top_left = roi.topLeft()
@@ -215,6 +217,10 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
                 nn_manager.draw(pv, nn_data)
                 fps.draw_fps(pv)
                 pv.show_frames(scale=conf.args.scale, callback=callbacks.on_show_frame)
+                i += nn_manager.get_traffic_counter()
+                nn_manager.reset_traffic_counter()
+                # i+=1
+                print(i)
             else:
                 nn_manager.draw(host_frame, nn_data)
                 fps.draw_fps(host_frame)

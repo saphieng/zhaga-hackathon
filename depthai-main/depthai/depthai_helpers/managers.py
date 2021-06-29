@@ -107,6 +107,7 @@ class NNetManager:
     text_color = (255, 255, 255)
     text_type = cv2.FONT_HERSHEY_SIMPLEX
     bbox_color = np.random.random(size=(256, 3)) * 256  # Random Colors for bounding boxes
+    trafficCounter = 0
 
     def __init__(self, input_size, source, model_dir=None, model_name=None, full_fov=False, flip_detection=False):
         if source not in self.source_choices:
@@ -275,6 +276,18 @@ class NNetManager:
         else:
             draw_cnt(source, len(cnt_list))
 
+    def count_traffic(self, decoded_data):
+        # Count the number of detected objects
+        # cnt_list = list(filter(lambda x: self.get_label_text(x.label) == self.count_label, decoded_data))
+        print("DEBUG: ", len(decoded_data))
+        self.trafficCounter = len(decoded_data)
+
+    def get_traffic_counter(self):
+        return self.trafficCounter
+
+    def reset_traffic_counter(self):
+        self.trafficCounter = 0
+
     def draw(self, source, decoded_data):
         if self.output_format == "detection":
             def draw_detection(frame, detection):
@@ -303,6 +316,8 @@ class NNetManager:
                         draw_detection(frame, detection)
                 else:
                     draw_detection(source, detection)
+            
+            self.count_traffic(decoded_data)
 
             if self.count_label is not None:
                 self.draw_count(source, decoded_data)
