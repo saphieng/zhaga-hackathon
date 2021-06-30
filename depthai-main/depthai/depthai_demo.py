@@ -161,6 +161,8 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
     callbacks.on_setup(**locals())
     i = 0
     j = 0
+    prev = 0
+    diff = 0
     try:
         while True:
             fps.next_iter()
@@ -214,19 +216,14 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
                 nn_manager.draw(pv, nn_data)
                 fps.draw_fps(pv)
                 pv.show_frames(scale=conf.args.scale, callback=callbacks.on_show_frame)
-                # if (FPSHandler.track <= nn_manager.trafficCounter ) or FPSHandler.trackreset == 1:
                 if j != nn_manager.get_traffic_counter():
-                    i += abs(nn_manager.get_traffic_counter()-j)
+                    if prev >= j:
+                        prev = j
+                    i += abs(nn_manager.get_traffic_counter()-prev)
                     j = nn_manager.get_traffic_counter()
+                    diff = i-j
                     nn_manager.reset_traffic_counter()
-                # time.sleep(1)
-                    # FPSHandler.trackreset = 0
-                # time.sleep(1)and i < nn_manager.trafficCounter
-                
-                # else:
-                
-                # i+=1
-                print(i)
+                print(diff)
             else:
                 nn_manager.draw(host_frame, nn_data)
                 fps.draw_fps(host_frame)
