@@ -241,6 +241,7 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
             if cv2.waitKey(1) == ord('q'):
                 break
 
+
             time.sleep(.125)
     finally:
         if conf.useCamera and enc_manager is not None:
