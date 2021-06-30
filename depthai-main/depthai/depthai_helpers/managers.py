@@ -290,6 +290,7 @@ class NNetManager:
 
     def draw(self, source, decoded_data):
         if self.output_format == "detection":
+            # print(decoded_data)
             def draw_detection(frame, detection):
                 bbox = frame_norm(self.normFrame(frame), [detection.xmin, detection.ymin, detection.xmax, detection.ymax])
                 bbox[::2] += self.cropOffsetX(frame)
@@ -316,7 +317,7 @@ class NNetManager:
                         draw_detection(frame, detection)
                 else:
                     draw_detection(source, detection)
-            
+
             self.count_traffic(decoded_data)
 
             if self.count_label is not None:

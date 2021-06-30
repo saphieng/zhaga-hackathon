@@ -161,8 +161,7 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
     callbacks.on_setup(**locals())
     i = 0
     j = 0
-    prev = 0
-    diff = 0
+    traffic = 0
     try:
         while True:
             fps.next_iter()
@@ -216,14 +215,19 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
                 nn_manager.draw(pv, nn_data)
                 fps.draw_fps(pv)
                 pv.show_frames(scale=conf.args.scale, callback=callbacks.on_show_frame)
-                if j != nn_manager.get_traffic_counter():
-                    if prev >= j:
-                        prev = j
-                    i += abs(nn_manager.get_traffic_counter()-prev)
-                    j = nn_manager.get_traffic_counter()
-                    diff = i-j
-                    nn_manager.reset_traffic_counter()
-                print(diff)
+                # if nn_manager.get_traffic_counter() > 0 :
+                #     # if prev != j:
+                #     traffic = nn_manager.get_traffic_counter()
+                #     i += abs(nn_manager.get_traffic_counter()-(prev))
+                #     j = nn_manager.get_traffic_counter()
+                #     diff = i-j
+                #     nn_manager.reset_traffic_counter()
+                # print(i)
+                traffic = nn_manager.get_traffic_counter()
+                if traffic > j:
+                    i += traffic - j
+                j = traffic
+                print(i)
             else:
                 nn_manager.draw(host_frame, nn_data)
                 fps.draw_fps(host_frame)
@@ -236,6 +240,8 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
 
             if cv2.waitKey(1) == ord('q'):
                 break
+
+            time.sleep(.125)
     finally:
         if conf.useCamera and enc_manager is not None:
             enc_manager.close()
