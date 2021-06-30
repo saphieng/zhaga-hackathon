@@ -279,7 +279,7 @@ class NNetManager:
     def count_traffic(self, decoded_data):
         # Count the number of detected objects
         # cnt_list = list(filter(lambda x: self.get_label_text(x.label) == self.count_label, decoded_data))
-        print("DEBUG: ", len(decoded_data))
+        print("DEBUG counter: ", len(decoded_data))
         self.trafficCounter = len(decoded_data)
 
     def get_traffic_counter(self):
@@ -333,6 +333,8 @@ class NNetManager:
 class FPSHandler:
     fps_color = (134, 164, 11)
     fps_type = cv2.FONT_HERSHEY_SIMPLEX
+    # track = 0
+    # trackreset = 0
 
     def __init__(self, cap=None):
         self.timestamp = time.monotonic()
@@ -357,11 +359,16 @@ class FPSHandler:
         self.frame_cnt += 1
 
     def tick(self, name):
+        # print("DEBUG length: ", self.ticks)
         if name in self.ticks:
             self.ticks_cnt[name] += 1
+            # self.track += 1
         else:
             self.ticks[name] = time.monotonic()
             self.ticks_cnt[name] = 0
+            # self.track = 0
+            # self.trackreset = 1
+            # # print("DEBUG tracking reset: ", self.track)
 
     def tick_fps(self, name):
         if name in self.ticks:
@@ -381,9 +388,10 @@ class FPSHandler:
             frame_fps = f"{name.upper()} FPS: {round(self.tick_fps(name), 1)}"
             cv2.rectangle(frame, (0, 0), (120, 35), (255, 255, 255), cv2.FILLED)
             cv2.putText(frame, frame_fps, (5, 15), self.fps_type, 0.4, self.fps_color)
-
             cv2.putText(frame, f"NN FPS:  {round(self.tick_fps('nn'), 1)}", (5, 30), self.fps_type, 0.5, self.fps_color)
+
         if isinstance(source, PreviewManager):
+            # print("DEBUG detection: ", len(source.frames.items()))
             for name, frame in source.frames.items():
                 draw(frame, name)
         else:
