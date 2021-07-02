@@ -9,6 +9,21 @@ from depthai_helpers.arg_manager import parse_args
 from depthai_helpers.config_manager import BlobManager, ConfigManager
 from depthai_helpers.utils import frame_norm, to_planar, to_tensor_result, load_module
 import time
+import serial
+
+
+
+ser = serial.Serial(
+    port = "/dev/serial/port1",
+    baudrate = 115200,
+    bytesize = serial.EIGHTBITS,
+    parity = serial.PARITY_NONE,
+    stopbits = serial.STOPBITS_ONE,
+    xonxoff = False,
+    rtscts = False,
+    dsrdtr = False,
+    timeout =1
+)
 
 print('Using depthai module from: ', dai.__file__)
 print('Depthai version installed: ', dai.__version__)
@@ -223,11 +238,28 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
                 #     diff = i-j
                 #     nn_manager.reset_traffic_counter()
                 # print(i)
+                
                 traffic = nn_manager.get_traffic_counter()
                 if traffic > j:
                     i += traffic - j
                 j = traffic
-                print(i)
+                print("Actual counts: ",i)
+                if ser.isOpen():
+                    x = ser.write(i)
+                    print("testing send data: ", x)
+                    x = ser.readline().decode().strip()
+                    print("testing received data: ", x)
+                    x = ser.flush()
+                    # x = ser.close()
+                else:
+                    x = ser.open()
+                    if ser.isOpen():
+                        x = ser.write(i)
+                        print("testing send data: ", x)
+                        x = ser.readline().decode().strip()
+                        print("testing received data: ", x)
+                        x = ser.flush()
+                        # x = ser.close()
             else:
                 nn_manager.draw(host_frame, nn_data)
                 fps.draw_fps(host_frame)
@@ -242,7 +274,7 @@ with dai.Device(pm.p.getOpenVINOVersion(), device_info, usb2Mode=conf.args.usb_s
                 break
 
 
-            time.sleep(.125)
+            time.sleep(.09375)
     finally:
         if conf.useCamera and enc_manager is not None:
             enc_manager.close()
