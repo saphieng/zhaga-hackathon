@@ -6,6 +6,10 @@ import depthai as dai
 import numpy as np
 import time
 import argparse
+import serial
+from time import sleep
+
+ser = serial.Serial ("/dev/ttyS0", 9600) 
 
 nnPathDefault = str((Path(__file__).parent / Path('depthai-python/examples/models/mobilenet-ssd_openvino_2021.2_6shave.blob')).resolve().absolute())
 parser = argparse.ArgumentParser()
@@ -103,7 +107,7 @@ with dai.Device(pipeline) as device:
             currentFilterIndex = 0
         return lastLabel
     
-    def calculateObjectsPerFrame (objPerFrame, filterSize):
+    def calculateObjectsPerFrame (objPerFrame, filterSize, serialPort):
         #median approach
         global objectCount
         global lastLoopCount
@@ -112,6 +116,8 @@ with dai.Device(pipeline) as device:
         if currentLoopCount > lastLoopCount:
             objectCount += (currentLoopCount - lastLoopCount)
             print('object count=' + str(objectCount));
+            #Send new count to raspberry pi serial port
+            serialPort.write(('object count=' + str(objectCount) + '\r\n').encode())
         lastLoopCount = currentLoopCount
         
     while True:
@@ -136,7 +142,7 @@ with dai.Device(pipeline) as device:
         # If the frame is available, draw bounding boxes on it and show the frame
         if frame is not None:
             currentLabel = displayFrame("rgb", frame, currentLabel)
-            calculateObjectsPerFrame(objectsPerFrame, filterSize)
+            calculateObjectsPerFrame(objectsPerFrame, filterSize, ser)
 
         if cv2.waitKey(1) == ord('q'):
             break
