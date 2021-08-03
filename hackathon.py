@@ -8,8 +8,17 @@ import time
 import argparse
 import serial
 from time import sleep
+import time
+import datetime
+from hanging_threads import start_monitoring
 
-ser = serial.Serial ("/dev/ttyS0", 9600) 
+#start_monitoring(seconds_frozen = 10, test_interval= 20)
+
+start_time = time.time()
+
+upload_speed = 30
+
+ser = serial.Serial ("/dev/ttyS0", 9600, timeout = 1) 
 
 nnPathDefault = str((Path(__file__).parent / Path('depthai-python/examples/models/mobilenet-ssd_openvino_2021.2_6shave.blob')).resolve().absolute())
 parser = argparse.ArgumentParser()
@@ -43,7 +52,7 @@ camRgb.setPreviewSize(300, 300)
 camRgb.setInterleaved(False)
 camRgb.setFps(40)
 # Define a neural network that will make predictions based on the source frames
-nn.setConfidenceThreshold(0.95)
+nn.setConfidenceThreshold(0.5)
 nn.setBlobPath(args.nnPath)
 nn.setNumInferenceThreads(2)
 nn.input.setBlocking(False)
@@ -66,7 +75,7 @@ with dai.Device(pipeline) as device:
 
     frame = None
     detections = []
-    filterSize = 100
+    filterSize = 145
     objectsPerFrame = [0] * filterSize
     currentFilterIndex = 0
     startTime = time.monotonic()
@@ -87,25 +96,27 @@ with dai.Device(pipeline) as device:
     def displayFrame(name, frame, currLabel):
         color = (255, 0, 0)
         lastLabel = "";
-        objectToDetect = "person"
+        objectToDetect = "car"
         global objectsPerFrame
         global currentFilterIndex
         global filterSize
         currentLoopCount = 0;
         for detection in detections:
-            if labelMap[detection.label] == objectToDetect:
+            if labelMap[detection.label] == "car" or labelMap[detection.label] == "bus" or labelMap[detection.label] == "motorbike" or labelMap[detection.label] == "person":
                 currentLoopCount += 1
                 lastLabel = labelMap[detection.label];
-                #bbox = frameNorm(frame, (detection.xmin, detection.ymin, detection.xmax, detection.ymax))
-                #cv2.putText(frame, f"{int(detection.confidence * 100)}%", (bbox[0] + 10, bbox[1] + 40), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
-                #cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
-        # Show the frame
-        #cv2.imshow(name, frame)
+#                 bbox = frameNorm(frame, (detection.xmin, detection.ymin, detection.xmax, detection.ymax))
+#                 cv2.putText(frame, f"{int(detection.confidence * 100)}%", (bbox[0] + 10, bbox[1] + 40), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
+#                 cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+#         # Show the frame
+#         cv2.imshow(name, frame)
         objectsPerFrame[currentFilterIndex] = currentLoopCount
         currentFilterIndex += 1
         if currentFilterIndex >= filterSize:
             currentFilterIndex = 0
         return lastLabel
+    
+    
     
     def calculateObjectsPerFrame (objPerFrame, filterSize, serialPort):
         #median approach
@@ -113,11 +124,21 @@ with dai.Device(pipeline) as device:
         global lastLoopCount
         np.sort(objPerFrame)
         currentLoopCount = objPerFrame[int(filterSize/2)]#gets the mid point of sorted array
+        global start_time
+        difference  = time.time() - start_time
+        #print("time difference: ", difference)
+        if (difference) >= upload_speed:
+            start_time = time.time()
+            print('serial count=' + str(objectCount));
+            #Send new count to raspberry pi serial port
+            serialPort.write((str(objectCount) + '\n').encode())
+                    
         if currentLoopCount > lastLoopCount:
             objectCount += (currentLoopCount - lastLoopCount)
             print('object count=' + str(objectCount));
-            #Send new count to raspberry pi serial port
-            serialPort.write(('object count=' + str(objectCount) + '\r\n').encode())
+            if objectCount > 65535:
+                objectCount = 0
+            #serialPort.write((str(objectCount) + '\n').encode())
         lastLoopCount = currentLoopCount
         
     while True:
